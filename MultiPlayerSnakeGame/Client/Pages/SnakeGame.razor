@@ -1,0 +1,259 @@
+﻿@page "/snake/{GameId?}"
+@using Blazor.Extensions
+@using Blazor.Extensions.Canvas.Canvas2D
+@using MultiPlayerSnakeGame.Shared
+@using MultiPlayerSnakeGame.Client
+@using Microsoft.AspNetCore.SignalR.Client
+
+@inject NavigationManager NavManager
+@inject IJSRuntime JsRuntime
+@implements IAsyncDisposable
+
+
+<h3>Game: @GameId - Status: @State.ToString()</h3> 
+<a href="/snake/@GameId" style="display: @(string.IsNullOrWhiteSpace(GameId) ? "none" : "block")" target="_blank">Invite your friends</a>
+<br />
+<br />
+<button @onclick="Start" disabled="@(IsConnected)">Start</button>
+<br />
+<br />
+<button @onclick="Stop" disabled="@(!IsConnected)">Stop</button>
+<br />
+<br />
+<div tabindex="0" @onkeydown="OnKeyDown" style="width: @($"{Constants.CANVAS_WIDTH}px"); height: @($"{Constants.CANVAS_HEIGHT}px")">
+    <BECanvas Width="@Constants.CANVAS_WIDTH" Height="@Constants.CANVAS_HEIGHT" @ref="_canvasReference"></BECanvas>
+</div>
+<br />
+<h3>Players:</h3>
+<ul style="list-style:none">
+    @foreach (var p in players)
+    {
+        <li style="color: @p.Color">@p.Name</li>
+    }
+</ul>
+
+<br />
+<br />
+<p>@StateMessage</p>
+
+@code {
+
+    protected BECanvasComponent _canvasReference;
+    private Canvas2DContext _context;
+    private string lastArrowKey = string.Empty;
+    private System.Threading.Timer timer;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        _context = await this._canvasReference.CreateCanvas2DAsync();
+
+        await SetupCanvasAsync();
+    }
+
+    private async Task SetupCanvasAsync()
+    {
+        await _context.BeginBatchAsync();
+        await _context.SetStrokeStyleAsync("red");
+        await _context.SetLineWidthAsync(1);
+        await _context.StrokeRectAsync(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
+        await _context.EndBatchAsync();
+    }
+
+    private async Task ResetCanvasAsync()
+    {
+        await _context.ClearRectAsync(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
+        await SetupCanvasAsync();
+    }
+
+    protected async Task OnKeyDown(KeyboardEventArgs args)
+    {
+        //await gameClient.PlayAsync(new Play { KeyCode = args.Key });
+
+
+
+        if (args.Key != lastArrowKey)
+        {
+            lastArrowKey = args.Key;
+            if (timer != null)
+            {
+                timer.Dispose();
+            }
+            timer = new System.Threading.Timer(async (object stateInfo) =>
+            {
+                await gameClient.PlayAsync(new Play { KeyCode = lastArrowKey });
+
+            }, new System.Threading.AutoResetEvent(false), 0, 100);
+        }
+    }
+
+    [Parameter]
+    public string GameId { get; set; }
+    Player player;
+    GameClient gameClient;
+    List<Player> players = new List<Player>();
+
+    private Player GetMyPlayer()
+    {
+        if (players.Count < 1 || gameClient == null)
+        {
+            throw new Exception("This shouldn't happen as GetMyPlayer should be called only while connected and playing");
+        }
+
+        return players.Find(p => p.Id == gameClient.ConnectionId);
+    }
+
+    public bool IsConnected { get => gameClient != null && gameClient.Connected; }
+    public HubConnectionState State { get; set; } = HubConnectionState.Disconnected;
+    public string StateMessage { get; set; }
+
+    async Task Start()
+    {
+        if (string.IsNullOrWhiteSpace(GameId))
+        {
+            GameId = await JsRuntime.InvokeAsync<string>("prompt", "Enter game ID:", RandomString(8));
+        }
+
+        if (player == null)
+        {
+            player = new Player();
+            player.JoinedOn = DateTime.Now;
+            player.Name = await JsRuntime.InvokeAsync<string>("prompt", "Enter your name:", "Islam");
+            player.Color = await JsRuntime.InvokeAsync<string>("prompt", "Enter your color:", "red");
+        }
+
+        if (gameClient == null || !gameClient.Connected)
+        {
+            gameClient = new GameClient(GameId, player, NavManager.BaseUri);
+            gameClient.StateChanged += StateChanged;
+            gameClient.MessageReceived += MessageReceived;
+            await gameClient.StartAsync();
+            State = HubConnectionState.Connected;
+            StateMessage = "Game started.";
+            //StateChanged();
+        }
+    }
+
+    async Task Stop()
+    {
+        if (gameClient != null && gameClient.Connected)
+        {
+            await gameClient.StopAsync();
+        }
+    }
+
+    void StateChanged(object sender, StateChangedEventArgs e)
+    {
+        State = e.State;
+        StateMessage = e.Message;
+
+        if (State == HubConnectionState.Disconnected)
+        {
+            players.Clear();
+            if (timer != null)
+            {
+                timer.Dispose();
+            }
+            Task.Run(() => ResetCanvasAsync());
+        }
+
+        StateHasChanged();
+    }
+
+    void MessageReceived(object sender, MessageReceivedEventArgs e)
+    {
+        if (e.Action is PlayerPlayedAction)
+        {
+            Task.Run(() => Draw(e.Action.Player.Snake));
+        }
+        else if (e.Action is PlayerJoinedAction)
+        {
+            players = e.Action.Payload as List<Player>;
+            StateHasChanged();
+
+            // if me
+            if (gameClient.ConnectionId == e.Action.ConnectionId)
+            {
+                players.ForEach(p => Draw(p.Snake));
+            }
+            else
+            {
+                Draw(e.Action.Player.Snake);
+            }
+        }
+        else if (e.Action is PlayerLeftAction)
+        {
+            players = e.Action.Payload as List<Player>;
+            Clear(e.Action.Player.Snake);
+            StateHasChanged();
+        }
+    }
+
+    private async Task Draw(Snake snake)
+    {
+        await _context.BeginBatchAsync();
+
+        if (snake.LastPosition != null && snake.LastPosition.Count > 0)
+        {
+            foreach (var pos in snake.LastPosition)
+            {
+                await _context.ClearRectAsync(pos.X, pos.Y, Constants.SNAKE_SIZE, Constants.SNAKE_SIZE);
+            }
+        }
+
+
+        await _context.SetFillStyleAsync(snake.Color);
+        await _context.FillRectAsync(snake.Position.Last.Value.X, snake.Position.Last.Value.Y, snake.Size, snake.Size);
+        await _context.EndBatchAsync();
+    }
+
+    private async Task Clear(Snake snake)
+    {
+        if (_context == null) return;
+
+        await _context.BeginBatchAsync();
+        foreach (var pos in snake.Position)
+        {
+            await _context.ClearRectAsync(pos.X, pos.Y, Constants.SNAKE_SIZE, Constants.SNAKE_SIZE);
+        }
+        await _context.EndBatchAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        //string gid;
+        //NavManager.TryGetQueryString<string>("GameId", out gid);
+        //GameId = gid;
+        //NavManager.LocationChanged += HandleLocationChanged;
+    }
+
+    void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        //NavManager.TryGetQueryString<string>("game", out GameId);
+
+        //StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        NavManager.LocationChanged -= HandleLocationChanged;
+        if (gameClient != null)
+        {
+            gameClient.MessageReceived -= MessageReceived;
+            gameClient.StateChanged -= StateChanged;
+        }
+        await Stop();
+        gameClient = null;
+    }
+
+    private static Random random = new Random();
+    public static string RandomString(int length)
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        return new string(Enumerable.Repeat(chars, length)
+        .Select(s => s[random.Next(s.Length)]).ToArray());
+    }
+
+}
