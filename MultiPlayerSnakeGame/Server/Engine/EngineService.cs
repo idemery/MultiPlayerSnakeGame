@@ -44,11 +44,20 @@ namespace MultiPlayerSnakeGame.Server.Engine
                 {
                     if (opponent.Id == action.ConnectionId)
                     {
-                        if (opponent.Snake.Position.Where(po => !po.Equals(opponent.Snake.Position.Last.Value)).Any(p => p.Equals(action.Player.Snake.Position.Last.Value)))
+                        if (action.Player.Snake.Position.Count < 2) continue;
+
+                        var current = opponent.Snake.Position.Last;
+                        while (current.Previous != null)
                         {
-                            hit = true;
-                            break;
+                            if (current.Previous.Value.Equals(action.Player.Snake.Position.Last.Value))
+                            {
+                                hit = true;
+                                break;
+                            }
+                            current = current.Previous;
                         }
+
+                        if (hit) break;
                     }
                     else
                     {
@@ -57,7 +66,7 @@ namespace MultiPlayerSnakeGame.Server.Engine
                             hit = true;
                             break;
                         }
-                    } 
+                    }
                 }
 
                 if (hit)

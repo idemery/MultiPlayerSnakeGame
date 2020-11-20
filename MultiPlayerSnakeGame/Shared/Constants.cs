@@ -25,8 +25,9 @@ namespace MultiPlayerSnakeGame.Shared
         public const string PING_TEST = "PingTest";
         public const string PONG_TEST = "PongTest";
 
-        public const int CANVAS_WIDTH = 800;
-        public const int CANVAS_HEIGHT = 800;
+        public const int CANVAS_WIDTH = 500;
+        public const int CANVAS_HEIGHT = 500;
         public const int SNAKE_SIZE = 10;
+        public const int TIMER_ELAPSE = 100;
     }
 }

@@ -32,14 +32,6 @@
     </div>
 </div>
 
-
-@*<h3>Game: @GameId (@State.ToString())</h3>*@
-
-<br />
-<br />
-@*<p>@StateMessage</p>*@
-
-
 @code {
 
     #region Parameters & Properties
@@ -100,6 +92,7 @@
     #region Game Actions
     protected async Task OnKeyDown(KeyboardEventArgs args)
     {
+        // used for debugging.. don't delete
         //await gameClient.PlayAsync(new Play { KeyCode = args.Key });
         //return;
 
@@ -115,7 +108,7 @@
             {
                 await gameClient.PlayAsync(new Play { KeyCode = lastArrowKey });
 
-            }, new System.Threading.AutoResetEvent(false), 0, 200);
+            }, new System.Threading.AutoResetEvent(false), 0, Constants.TIMER_ELAPSE);
         }
     }
 
@@ -148,8 +141,9 @@
             await gameClient.StartAsync();
             State = HubConnectionState.Connected;
             StateMessage = "Game started.";
-            // await JsRuntime.FocusAsync(_canvasContainer);
-            //StateChanged();
+            
+            //await JsRuntime.FocusAsync(_canvasContainer);
+            //StateHasChanged();
         }
     }
 
@@ -168,7 +162,7 @@
         State = e.State;
         StateMessage = e.Message;
 
-        if (State == HubConnectionState.Disconnected)
+        if (State != HubConnectionState.Connected)
         {
             players.Clear();
             if (timer != null)
@@ -176,6 +170,7 @@
                 timer.Dispose();
             }
             Task.Run(() => ResetCanvasAsync());
+            Task.Run(() => JsRuntime.InvokeAsync<object>("alert", "YOU LOST"));
         }
 
         StateHasChanged();
@@ -210,11 +205,11 @@
 
             if (left.Lost)
             {
-                ClearLost(e.Action.Player.Snake);
+                Task.Run(() => ClearLost(e.Action.Player.Snake));
             }
             else
             {
-                Clear(e.Action.Player.Snake);
+                Task.Run(() => Clear(e.Action.Player.Snake));
             }
         }
     }
@@ -228,7 +223,6 @@
     private async Task DrawEgg(Point egg)
     {
         await _context.BeginBatchAsync();
-
         await _context.SetFillStyleAsync("black");
         await _context.FillRectAsync(egg.X, egg.Y, Constants.SNAKE_SIZE, Constants.SNAKE_SIZE);
         await _context.EndBatchAsync();
@@ -277,10 +271,12 @@
         }
 
         await _context.BeginBatchAsync();
+
         foreach (var pos in snake.LastPosition)
         {
             await _context.ClearRectAsync(pos.X, pos.Y, Constants.SNAKE_SIZE, Constants.SNAKE_SIZE);
         }
+
         await _context.EndBatchAsync();
 
     }

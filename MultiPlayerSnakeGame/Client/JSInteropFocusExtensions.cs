@@ -9,9 +9,9 @@ namespace MultiPlayerSnakeGame.Client
 {
     public static class JSInteropFocusExtensions
     {
-        public static ValueTask FocusAsync(this IJSRuntime jsRuntime, ElementReference elementReference)
+        public static async ValueTask FocusAsync(this IJSRuntime jsRuntime, ElementReference elementReference)
         {
-            return jsRuntime.InvokeVoidAsync("BlazorFocusElement", elementReference);
+            await jsRuntime.InvokeVoidAsync("BlazorFocusElement", elementReference);
         }
     }
 }

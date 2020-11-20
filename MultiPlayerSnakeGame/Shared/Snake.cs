@@ -14,21 +14,6 @@ namespace MultiPlayerSnakeGame.Shared
         public List<Point> LastPosition { get; set; }
         public LinkedList<Point> Position { get; set; }
 
-        private void Shift()
-        {
-            if (Position.Count < 2) return;
-
-            var current = Position.Last;
-
-            while (current.Previous != null)
-            {
-                Point temp = current.Previous.Value;
-                current.Previous.Value = current.Value;
-                current.Value = temp;
-                current = current.Previous;
-            }
-        }
-
         private bool IsOutOfEdge(Point location)
         {
             return location.X < 0 || location.X >= Edge.X || location.Y < 0 || location.Y >= Edge.Y;
@@ -41,12 +26,11 @@ namespace MultiPlayerSnakeGame.Shared
                 return false;
             }
 
-            Point[] points = new Point[Position.Count];
-            Position.CopyTo(points, 0);
-            LastPosition = points.ToList();
+            Position.AddLast(newLocation);
 
-            Shift();
-            Position.Last.Value = new Point(newLocation.X, newLocation.Y);
+            LastPosition = new List<Point> { Position.First.Value };
+            
+            Position.RemoveFirst();
 
             return true;
         }
