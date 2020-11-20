@@ -18,11 +18,15 @@ namespace MultiPlayerSnakeGame.Shared
         public const string GAME_ACTION = "GameActionAsync";
         public const string GAME_ACTION_CALLBACK = "GameActionCallback";
 
+        public const string GAME_PLAYER_LOST = "YouLost";
+        public const string GAME_PLAYER_WON = "YouWon";
+        public const string GAME_NEW_EGG = "NewEgg";
+
         public const string PING_TEST = "PingTest";
         public const string PONG_TEST = "PongTest";
 
-        public const int CANVAS_WIDTH = 400;
-        public const int CANVAS_HEIGHT = 400;
+        public const int CANVAS_WIDTH = 800;
+        public const int CANVAS_HEIGHT = 800;
         public const int SNAKE_SIZE = 10;
     }
 }

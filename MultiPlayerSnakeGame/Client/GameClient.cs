@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using MultiPlayerSnakeGame.Shared;
@@ -39,6 +40,7 @@ namespace MultiPlayerSnakeGame.Client
         #region EVENTS
         public event MessageReceivedEventHandler MessageReceived;
         public event StateChangedEventHandler StateChanged;
+        public event NewEggFoundEventHandler NewEggFound;
         #endregion    
 
         #region PUBLIC METHODS
@@ -55,7 +57,7 @@ namespace MultiPlayerSnakeGame.Client
                 _hubConnection.On<PlayerJoinedAction>(Constants.GAME_PLAYER_JOINED_CALLBACK, HandleGameActionAsync);
                 _hubConnection.On<PlayerLeftAction>(Constants.GAME_PLAYER_LEFT_CALLBACK, HandleGameActionAsync);
                 _hubConnection.On<PlayerPlayedAction>(Constants.GAME_ACTION_CALLBACK, HandleGameActionAsync);
-
+                _hubConnection.On<Point>(Constants.GAME_NEW_EGG, HandleNewEggFoundAsync);
 
                 await _hubConnection.StartAsync();
 
@@ -116,11 +118,28 @@ namespace MultiPlayerSnakeGame.Client
             // await Task.Factory.FromAsync( ( asyncCallback, @object ) => 
             // this.MessageReceived.BeginInvoke( this, new MessageReceivedEventArgs(action), asyncCallback, @object ), this.MessageReceived.EndInvoke, null );
         }
+
+        private async Task HandleNewEggFoundAsync(Point egg)
+        {
+            NewEggFound?.Invoke(this, new NewEggFoundEventArgs(egg));
+        }
         #endregion
     }
 
     public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
     public delegate void StateChangedEventHandler(object sender, StateChangedEventArgs e);
+    public delegate void NewEggFoundEventHandler(object sender, NewEggFoundEventArgs e);
+
+    public class NewEggFoundEventArgs : EventArgs
+    {
+        public NewEggFoundEventArgs(Point egg)
+        {
+            Egg = egg;
+        }
+
+        public Point Egg { get; init; }
+
+    }
 
     public class MessageReceivedEventArgs : EventArgs
     {

@@ -1,0 +1,58 @@
+﻿#toolbarDiv {
+    height: 100px;
+    text-align: center;
+}
+
+#playersDiv {
+    height: 50px;
+    padding: 20px;
+}
+
+#gamecontainer {
+    overflow: hidden;
+    margin: auto;
+    margin-top: 36px;
+    width: 850px;
+}
+
+*:focus {
+    outline: 0;
+}
+
+.invite-link {
+    font-size: x-large;
+    font-family: fantasy;
+    text-align: center;
+    line-height: 100px;
+}
+
+.game-btn {
+    width: 100px;
+    height: 100px;
+    background-color: white;
+    font-family: fantasy;
+    font-size: x-large;
+    position: absolute;
+}
+
+.connect-btn {
+    color: green;
+    border: 1px solid green;
+    left: 0px;
+}
+
+.disconnect-btn {
+    color: red;
+    border: 1px solid red;
+    right: 0px;
+    top: 0px;
+}
+
+.player {
+    width: 50px;
+    height: 50px;
+    float: left;
+    font-size: x-large;
+    font-family: fantasy;
+    margin-right: 20px;
+}

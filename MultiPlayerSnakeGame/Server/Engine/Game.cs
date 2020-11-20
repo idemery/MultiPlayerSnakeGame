@@ -11,17 +11,24 @@ namespace MultiPlayerSnakeGame.Server.Engine
     public class Game
     {
         int snakeSize = 10;
+        static Random random = new Random(DateTime.Now.Ticks.GetHashCode());
         public Game(string id, Player player)
         {
             Id = id;
             Players = new List<Player>();
             Join(player);
+            NewEgg();
         }
 
         public string Id { get; init; }
         public List<Player> Players { get; init; }
+        public Point Egg { get; set; }
 
-        static Random random = new Random(0);
+        public Point NewEgg()
+        {
+            Egg = GetRandomLocation();
+            return Egg;
+        }
 
         private Point GetRandomLocation()
         {
@@ -29,9 +36,13 @@ namespace MultiPlayerSnakeGame.Server.Engine
             // for example if snake point size is 10 we dont want to get any random x between 0 or 10 but either 0, 10, or 20, etc..
             var xRange = Enumerable.Range(Constants.SNAKE_SIZE, Constants.CANVAS_WIDTH).Where(x => x % Constants.SNAKE_SIZE == 0).ToList();
             var yRange = Enumerable.Range(Constants.SNAKE_SIZE, Constants.CANVAS_HEIGHT).Where(x => x % Constants.SNAKE_SIZE == 0).ToList();
-            int xIndex = random.Next(xRange.Count - 1);
-            int yIndex = random.Next(yRange.Count - 1);
+            int xIndex = random.Next(0, xRange.Count - 1);
+            int yIndex = random.Next(0, yRange.Count - 1);
             Point randomLocation = new Point(xRange[xIndex], yRange[yIndex]);
+            if (!IsValidLocation(randomLocation))
+            {
+                return GetRandomLocation();
+            }
             return randomLocation;
         }
         private bool IsValidLocation(Point locaiton)
@@ -44,10 +55,6 @@ namespace MultiPlayerSnakeGame.Server.Engine
             if (!Players.Any(p => p.Id == player.Id))
             {
                 Point randomLocation = GetRandomLocation();
-                while (!IsValidLocation(randomLocation))
-                {
-                    randomLocation = GetRandomLocation();
-                }
 
                 var position = new LinkedList<Point>();
                 position.AddLast(new LinkedListNode<Point>(randomLocation));

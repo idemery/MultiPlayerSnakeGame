@@ -16,10 +16,15 @@ namespace MultiPlayerSnakeGame.Shared
 
         private void Shift()
         {
+            if (Position.Count < 2) return;
+
             var current = Position.Last;
+
             while (current.Previous != null)
             {
+                Point temp = current.Previous.Value;
                 current.Previous.Value = current.Value;
+                current.Value = temp;
                 current = current.Previous;
             }
         }
@@ -69,6 +74,12 @@ namespace MultiPlayerSnakeGame.Shared
             Point newLocation = new Point(Position.Last.Value.X + Size, Position.Last.Value.Y);
 
             return Move(newLocation);
+        }
+
+        public void Eat(Point egg)
+        {
+            Position.AddBefore(Position.First, LastPosition.First());
+            LastPosition.RemoveAt(0);
         }
     }
 }

@@ -4,13 +4,14 @@
 @using MultiPlayerSnakeGame.Shared
 @using MultiPlayerSnakeGame.Client
 @using Microsoft.AspNetCore.SignalR.Client
+@using System.Drawing;
 
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
 @implements IAsyncDisposable
 
 
-<h3>Game: @GameId - Status: @State.ToString()</h3> 
+<h3>Game: @GameId (@State.ToString())</h3> 
 <a href="/snake/@GameId" style="display: @(string.IsNullOrWhiteSpace(GameId) ? "none" : "block")" target="_blank">Invite your friends</a>
 <br />
 <br />
@@ -20,7 +21,7 @@
 <button @onclick="Stop" disabled="@(!IsConnected)">Stop</button>
 <br />
 <br />
-<div tabindex="0" @onkeydown="OnKeyDown" style="width: @($"{Constants.CANVAS_WIDTH}px"); height: @($"{Constants.CANVAS_HEIGHT}px")">
+<div tabindex="0" @onkeydown="OnKeyDown" style="width: @($"{Constants.CANVAS_WIDTH}px"); height: @($"{Constants.CANVAS_HEIGHT}px"); border: 1px solid red" @ref="_canvasContainer">
     <BECanvas Width="@Constants.CANVAS_WIDTH" Height="@Constants.CANVAS_HEIGHT" @ref="_canvasReference"></BECanvas>
 </div>
 <br />
@@ -38,6 +39,7 @@
 
 @code {
 
+    private ElementReference _canvasContainer;
     protected BECanvasComponent _canvasReference;
     private Canvas2DContext _context;
     private string lastArrowKey = string.Empty;
@@ -55,11 +57,11 @@
 
     private async Task SetupCanvasAsync()
     {
-        await _context.BeginBatchAsync();
-        await _context.SetStrokeStyleAsync("red");
-        await _context.SetLineWidthAsync(1);
-        await _context.StrokeRectAsync(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
-        await _context.EndBatchAsync();
+        //await _context.BeginBatchAsync();
+        //await _context.SetStrokeStyleAsync("red");
+        //await _context.SetLineWidthAsync(1);
+        //await _context.StrokeRectAsync(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
+        //await _context.EndBatchAsync();
     }
 
     private async Task ResetCanvasAsync()
@@ -71,7 +73,7 @@
     protected async Task OnKeyDown(KeyboardEventArgs args)
     {
         //await gameClient.PlayAsync(new Play { KeyCode = args.Key });
-
+        //return;
 
 
         if (args.Key != lastArrowKey)
@@ -97,11 +99,6 @@
 
     private Player GetMyPlayer()
     {
-        if (players.Count < 1 || gameClient == null)
-        {
-            throw new Exception("This shouldn't happen as GetMyPlayer should be called only while connected and playing");
-        }
-
         return players.Find(p => p.Id == gameClient.ConnectionId);
     }
 
@@ -113,15 +110,20 @@
     {
         if (string.IsNullOrWhiteSpace(GameId))
         {
-            GameId = await JsRuntime.InvokeAsync<string>("prompt", "Enter game ID:", RandomString(8));
+            GameId = RandomString(8);
         }
 
         if (player == null)
         {
             player = new Player();
             player.JoinedOn = DateTime.Now;
-            player.Name = await JsRuntime.InvokeAsync<string>("prompt", "Enter your name:", "Islam");
-            player.Color = await JsRuntime.InvokeAsync<string>("prompt", "Enter your color:", "red");
+            player.Name = RandomString(4);
+
+
+            string[] colorList = new string[] { "red", "purple", "green", "blue", "brown", "orange", "pink" };
+            string randomColor = colorList[random.Next(0, colorList.Length - 1)];
+
+            player.Color = randomColor;
         }
 
         if (gameClient == null || !gameClient.Connected)
@@ -129,9 +131,11 @@
             gameClient = new GameClient(GameId, player, NavManager.BaseUri);
             gameClient.StateChanged += StateChanged;
             gameClient.MessageReceived += MessageReceived;
+            gameClient.NewEggFound += NewEggFound;
             await gameClient.StartAsync();
             State = HubConnectionState.Connected;
             StateMessage = "Game started.";
+            // await JsRuntime.FocusAsync(_canvasContainer);
             //StateChanged();
         }
     }
@@ -185,10 +189,33 @@
         }
         else if (e.Action is PlayerLeftAction)
         {
-            players = e.Action.Payload as List<Player>;
-            Clear(e.Action.Player.Snake);
+            PlayerLeftAction left = (PlayerLeftAction)e.Action;
+            players = left.Payload;
             StateHasChanged();
+
+            if (left.Lost)
+            {
+                ClearLost(e.Action.Player.Snake);
+            }
+            else
+            {
+                Clear(e.Action.Player.Snake);
+            }
         }
+    }
+
+    void NewEggFound(object sender, NewEggFoundEventArgs e)
+    {
+        DrawEgg(e.Egg);
+    }
+
+    private async Task DrawEgg(Point egg)
+    {
+        await _context.BeginBatchAsync();
+
+        await _context.SetFillStyleAsync("black");
+        await _context.FillRectAsync(egg.X, egg.Y, Constants.SNAKE_SIZE, Constants.SNAKE_SIZE);
+        await _context.EndBatchAsync();
     }
 
     private async Task Draw(Snake snake)
@@ -205,20 +232,41 @@
 
 
         await _context.SetFillStyleAsync(snake.Color);
-        await _context.FillRectAsync(snake.Position.Last.Value.X, snake.Position.Last.Value.Y, snake.Size, snake.Size);
+
+        foreach (var pt in snake.Position)
+        {
+            await _context.FillRectAsync(pt.X, pt.Y, snake.Size, snake.Size);
+        }
+
         await _context.EndBatchAsync();
     }
 
     private async Task Clear(Snake snake)
     {
-        if (_context == null) return;
-
         await _context.BeginBatchAsync();
         foreach (var pos in snake.Position)
         {
             await _context.ClearRectAsync(pos.X, pos.Y, Constants.SNAKE_SIZE, Constants.SNAKE_SIZE);
         }
         await _context.EndBatchAsync();
+    }
+
+    private async Task ClearLost(Snake snake)
+    {
+
+        if (snake.LastPosition == null || !snake.LastPosition.Any())
+        {
+            await Clear(snake);
+            return;
+        }
+
+        await _context.BeginBatchAsync();
+        foreach (var pos in snake.LastPosition)
+        {
+            await _context.ClearRectAsync(pos.X, pos.Y, Constants.SNAKE_SIZE, Constants.SNAKE_SIZE);
+        }
+        await _context.EndBatchAsync();
+
     }
 
     protected override void OnInitialized()
@@ -248,12 +296,12 @@
         gameClient = null;
     }
 
-    private static Random random = new Random();
+    private static Random random = new Random(DateTime.Now.Ticks.GetHashCode());
     public static string RandomString(int length)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         return new string(Enumerable.Repeat(chars, length)
-        .Select(s => s[random.Next(s.Length)]).ToArray());
+        .Select(s => s[random.Next(0, s.Length)]).ToArray());
     }
 
 }
