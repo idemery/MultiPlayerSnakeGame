@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using MultiPlayerSnakeGame.Shared;
@@ -8,10 +7,32 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace MultiPlayerSnakeGame.Server.Engine
 {
+    public static class ThreadSafeRandom
+    {
+        private static readonly Random _global = new Random();
+        [ThreadStatic] private static Random _local;
+
+        public static int Next(int min, int max)
+        {
+            if (_local == null)
+            {
+                lock (_global)
+                {
+                    if (_local == null)
+                    {
+                        int seed = _global.Next(min, max);
+                        _local = new Random(seed);
+                    }
+                }
+            }
+
+            return _local.Next(min, max);
+        }
+    }
+
     public class Game
     {
-        int snakeSize = 10;
-        static Random random = new Random(DateTime.Now.Ticks.GetHashCode());
+        //static Random random = new Random(DateTime.Now.Ticks.GetHashCode());
         public Game(string id, Player player)
         {
             Id = id;
@@ -26,7 +47,7 @@ namespace MultiPlayerSnakeGame.Server.Engine
 
         public Point NewEgg()
         {
-            Egg = GetRandomLocation();
+            Egg = GetRandomLocation();//new Point(30, 50);//
             return Egg;
         }
 
@@ -36,8 +57,9 @@ namespace MultiPlayerSnakeGame.Server.Engine
             // for example if snake point size is 10 we dont want to get any random x between 0 or 10 but either 0, 10, or 20, etc..
             var xRange = Enumerable.Range(Constants.SNAKE_SIZE, Constants.CANVAS_WIDTH).Where(x => x % Constants.SNAKE_SIZE == 0).ToList();
             var yRange = Enumerable.Range(Constants.SNAKE_SIZE, Constants.CANVAS_HEIGHT).Where(x => x % Constants.SNAKE_SIZE == 0).ToList();
-            int xIndex = random.Next(0, xRange.Count - 1);
-            int yIndex = random.Next(0, yRange.Count - 1);
+            int xIndex = ThreadSafeRandom.Next(0, xRange.Count - 1);
+            int yIndex = ThreadSafeRandom.Next(0, yRange.Count - 1);
+
             Point randomLocation = new Point(xRange[xIndex], yRange[yIndex]);
             if (!IsValidLocation(randomLocation))
             {
@@ -62,7 +84,7 @@ namespace MultiPlayerSnakeGame.Server.Engine
                 {
                     Color = player.Color,
                     Edge = new Point(Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT),
-                    Size = snakeSize,
+                    Size = Constants.SNAKE_SIZE,
                     InitialLocation = randomLocation,
                     Position = position
                 };

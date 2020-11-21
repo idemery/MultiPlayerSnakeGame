@@ -4,6 +4,9 @@
     <TargetFramework>net5.0</TargetFramework>
     <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
   </PropertyGroup>
+  <!--<PropertyGroup>
+    <BlazorEnableCompression>false</BlazorEnableCompression>
+  </PropertyGroup>-->
 
   <ItemGroup>
     <PackageReference Include="Blazor.Extensions.Canvas" Version="1.1.0-preview1" />

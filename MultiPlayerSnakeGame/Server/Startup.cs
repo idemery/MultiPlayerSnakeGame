@@ -28,11 +28,11 @@ namespace MultiPlayerSnakeGame.Server
             services.AddSignalR();
             services.AddControllersWithViews();
             services.AddRazorPages();
-            //services.AddResponseCompression(opts =>
-            //{
-            //    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-            //        new[] { "application/octet-stream" });
-            //});
+            services.AddResponseCompression(opts =>
+            {
+                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                    new[] { "application/octet-stream" });
+            });
 
             services.AddSingleton<EngineService>();
         }
@@ -40,7 +40,7 @@ namespace MultiPlayerSnakeGame.Server
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            //app.UseResponseCompression();
+            app.UseResponseCompression();
 
             if (env.IsDevelopment())
             {

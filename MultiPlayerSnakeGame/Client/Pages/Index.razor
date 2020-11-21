@@ -5,31 +5,32 @@
 @using MultiPlayerSnakeGame.Shared
 @using MultiPlayerSnakeGame.Client
 @using Microsoft.AspNetCore.SignalR.Client
-@using System.Drawing;
 
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
 @implements IAsyncDisposable
 
     
-
-<div id="toolbarDiv">
-    <button class="game-btn connect-btn" @onclick="Start" disabled="@(IsConnected)">Start</button>
-    <a href="/@GameId" class="invite-link" style="display: @(string.IsNullOrWhiteSpace(GameId) ? "none" : "block")" target="_blank">Invite your friends</a>
-    <button class="game-btn disconnect-btn" @onclick="Stop" disabled="@(!IsConnected)">Stop</button>
-</div>
-<div id="playersDiv">
-    @foreach (var p in players)
-    {
-        <div class="player" style="background-color: @p.Color"></div>
-    }
-</div>
-
-<div id="gamecontainer" class="" style="display: @(IsConnected ? "block" : "none")">
-
-    <div tabindex="0" @onkeydown="OnKeyDown" style="width: @($"{Constants.CANVAS_WIDTH}px"); height: @($"{Constants.CANVAS_HEIGHT}px"); border: 1px solid red" @ref="_canvasContainer">
-        <BECanvas Width="@Constants.CANVAS_WIDTH" Height="@Constants.CANVAS_HEIGHT" @ref="_canvasReference"></BECanvas>
+<div tabindex="0" @onkeydown="OnKeyDown">
+    <div id="toolbarDiv">
+        <button class="game-btn connect-btn" @onclick="Start" disabled="@(IsConnected)">Start</button>
+        <a href="/@GameId" class="invite-link" style="display: @(string.IsNullOrWhiteSpace(GameId) ? "none" : "block")" target="_blank">Invite your friends</a>
+        <button class="game-btn disconnect-btn" @onclick="Stop" disabled="@(!IsConnected)">Stop</button>
     </div>
+    <div id="playersDiv">
+        @foreach (var p in players)
+        {
+            <div class="player" style="background-color: @p.Color"></div>
+        }
+    </div>
+
+    <div id="gamecontainer" style="display: @(IsConnected ? "block" : "none")">
+
+        <div style="width: @($"{Constants.CANVAS_WIDTH}px"); height: @($"{Constants.CANVAS_HEIGHT}px"); border: 1px solid red" @ref="_canvasContainer">
+            <BECanvas Width="@Constants.CANVAS_WIDTH" Height="@Constants.CANVAS_HEIGHT" @ref="_canvasReference"></BECanvas>
+        </div>
+    </div>
+
 </div>
 
 @code {
@@ -92,6 +93,24 @@
     #region Game Actions
     protected async Task OnKeyDown(KeyboardEventArgs args)
     {
+        if (args.Key == "Enter")
+        {
+            if (IsConnected)
+            {
+                await Stop();
+            }
+            else
+            {
+                await Start();
+            }
+            return;
+        }
+
+        if (!IsConnected)
+        {
+            return;
+        }
+
         // used for debugging.. don't delete
         //await gameClient.PlayAsync(new Play { KeyCode = args.Key });
         //return;
@@ -141,7 +160,7 @@
             await gameClient.StartAsync();
             State = HubConnectionState.Connected;
             StateMessage = "Game started.";
-            
+
             //await JsRuntime.FocusAsync(_canvasContainer);
             //StateHasChanged();
         }
@@ -170,7 +189,7 @@
                 timer.Dispose();
             }
             Task.Run(() => ResetCanvasAsync());
-            Task.Run(() => JsRuntime.InvokeAsync<object>("alert", "YOU LOST"));
+            //            Task.Run(() => JsRuntime.InvokeAsync<object>("alert", "YOU LOST"));
         }
 
         StateHasChanged();
@@ -180,7 +199,7 @@
     {
         if (e.Action is PlayerPlayedAction)
         {
-            Task.Run(() => Draw(e.Action.Player.Snake));
+            Draw(e.Action.Player.Snake);
         }
         else if (e.Action is PlayerJoinedAction)
         {
@@ -203,19 +222,21 @@
             players = left.Payload;
             StateHasChanged();
 
-            if (left.Lost)
-            {
-                Task.Run(() => ClearLost(e.Action.Player.Snake));
-            }
-            else
-            {
-                Task.Run(() => Clear(e.Action.Player.Snake));
-            }
+            //if (left.Lost)
+            //{
+            //    ClearLost(e.Action.Player.Snake);
+            //}
+            //else
+            //{
+            //    Clear(e.Action.Player.Snake);
+            //}
+            Clear(e.Action.Player.Snake);
         }
     }
 
     void NewEggFound(object sender, NewEggFoundEventArgs e)
     {
+        Console.WriteLine(e.Egg.X + "," + e.Egg.Y);
         DrawEgg(e.Egg);
     }
     #endregion
@@ -302,12 +323,14 @@
         return players.Find(p => p.Id == gameClient.ConnectionId);
     }
 
-    private static Random random = new Random(DateTime.Now.Ticks.GetHashCode());
-    public static string RandomString(int length)
+    //private static Random random = new Random(DateTime.Now.Ticks.GetHashCode());
+    public string RandomString(int length)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         return new string(Enumerable.Repeat(chars, length)
         .Select(s => s[random.Next(0, s.Length)]).ToArray());
     }
+
+    public Random random { get { return new Random(); } }
     #endregion
 }
