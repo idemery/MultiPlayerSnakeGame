@@ -14,7 +14,7 @@ This project is a way to learn Blazor and SignalR, and maybe to show case how us
 - If you loose by hitting the edges, yourself, or an opponent press Enter or click Start to join again loosing your tail.
 
 ## How it works
-There is only one razor page in the **Client** project `Index.razor` which listens on `'/{GameId?}'`. The is an optional parameter property and is considered the SignalR `Group` name. The game generates one if not provided.
+The **Client** project has just one `Index.razor` page that listens on `'/{GameId?}' which is an optional parameter property and is considered the SignalR `Group` name. The game generates one if not provided.
 
 This index page uses and handles a `GameClient` instance that acts as proxy to the SignalR hub `GameHub` and fires events when the hub calls the client back.
 
