@@ -22,7 +22,6 @@ The hub uses an injected `EngineService` singleton which holds a C# `ConcurrentD
 
 The game value instance holds a list of players where each player has an `Id` (signalr connection id), `Color` (generated randomly by the client when joining the game for the first time), and `Snake`.
 
-The `Snake` instance holds a C# `LinkedList` (good luck with javascript) that holds nodes of Points where the `Point` is X and Y integer properties.
+The `Snake` instance holds a C# `LinkedList` that holds nodes of Points where the `Point` is X and Y integer properties.
 
-Moving the snake is as simple as `linkedList.AddLast(newLocation); linkedList.RemoveFirst();` and then drawing the list points on the canvas.
 
