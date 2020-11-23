@@ -10,7 +10,7 @@ This project is a way to learn Blazor and SignalR, and maybe to show case how us
 
 ## How to play
 - Run the demo or run the web application, it's a Blazor hosted on ASP.NET Core so there is 3 projects Client, Server, and Shared. Run the server.
-- Press Space to Start or Stop the game.
+- Press **Space** to **start** or **stop** the game.
 - You can play as single or click on Invite your friends after it appears, it will open another page with a query to the same game you started, you may share this URL with your friends to join the same game.
 - Press on the arrow keys and target the black sqaure.
 - If you loose by hitting the edges, yourself, or an opponent press Enter or click Start to join again loosing your tail.
