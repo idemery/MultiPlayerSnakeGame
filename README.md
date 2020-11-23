@@ -1,7 +1,7 @@
 # Multiplayer Snake Game
 A multiplayer snake game using .NET 5 Blazor and SignalR that supports rooms and multiple games.
 
-Try a demo [https://blazorsnake.azurewebsites.net](https://blazorsnake.azurewebsites.net).
+Try the demo [https://blazorsnake.azurewebsites.net](https://blazorsnake.azurewebsites.net) press **Space** to **start** or **stop** the game..
 
 ![Multiplayer Snake Game](./MultiplayerSnakeGame.gif)
 
