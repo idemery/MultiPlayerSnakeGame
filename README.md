@@ -15,7 +15,7 @@ This project is meant to learn the technology there is no scores counting or gam
 - Press **Space** to **start** or **stop** the game.
 - You can play as single or click on Invite your friends after it appears, it will open another page with a query to the same game you started, you may share this URL with your friends to join the same game.
 - Press on the arrow keys and target the black sqaure.
-- If you loose by hitting the edges, yourself, or an opponent press Enter or click Start to join again loosing your tail.
+- If you loose by hitting the edges, yourself, or an opponent press Enter or press Space to join again loosing your tail.
 
 ## How it works
 The **Client** project has just one `Index.razor` page that listens on `'/{GameId?}'` which is an optional parameter property and is considered the SignalR `Group` name. The game generates one if not provided.
