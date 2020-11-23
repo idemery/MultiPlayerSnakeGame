@@ -8,6 +8,8 @@ Try the demo [https://blazorsnake.azurewebsites.net](https://blazorsnake.azurewe
 ## Introduction
 This project is a way to learn Blazor and SignalR, and maybe to show case how using C# instead of Javascript is more easier and simpler. The nuget package [BlazorExtensions Canvas](https://github.com/BlazorExtensions/Canvas) is used for interfacing the HTML canvas.
 
+This project is meant to learn the technology there is no scores counting or game rewards. However, contributions are most welcomed!
+
 ## How to play
 - Run the demo or run the web application, it's a Blazor hosted on ASP.NET Core so there is 3 projects Client, Server, and Shared. Run the server.
 - Press **Space** to **start** or **stop** the game.
