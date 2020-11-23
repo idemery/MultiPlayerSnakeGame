@@ -26,4 +26,11 @@ The game value instance holds a list of players where each player has an `Id` (s
 
 The `Snake` instance holds a C# `LinkedList` that holds nodes of Points where the `Point` is X and Y integer properties.
 
+You can change the speed and canvas size in `Constants.cs`:
+``` C#
+        public const int CANVAS_WIDTH = 500;
+        public const int CANVAS_HEIGHT = 500;
+        public const int SNAKE_SIZE = 10;
+        public const int TIMER_ELAPSE = 100; // smaller = faster
+```
 
