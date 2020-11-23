@@ -11,7 +11,7 @@
 @implements IAsyncDisposable
 
     
-<div tabindex="0" @onkeydown="OnKeyDown">
+<div @ref="pageContainer" tabindex="0" @onkeydown="OnKeyDown" style="height: @($"{Constants.CANVAS_HEIGHT + 200}px")">
     <div id="toolbarDiv">
         <button class="game-btn connect-btn" @onclick="Start" disabled="@(IsConnected)">Start</button>
         <a href="/@GameId" class="invite-link" style="display: @(string.IsNullOrWhiteSpace(GameId) ? "none" : "block")" target="_blank">Invite your friends</a>
@@ -24,7 +24,7 @@
         }
     </div>
 
-    <div id="gamecontainer" style="display: @(IsConnected ? "block" : "none")">
+    <div id="gamecontainer" style="display: @(IsConnected ? "block" : "none");">
 
         <div style="width: @($"{Constants.CANVAS_WIDTH}px"); height: @($"{Constants.CANVAS_HEIGHT}px"); border: 1px solid red" @ref="_canvasContainer">
             <BECanvas Width="@Constants.CANVAS_WIDTH" Height="@Constants.CANVAS_HEIGHT" @ref="_canvasReference"></BECanvas>
@@ -51,12 +51,15 @@
     Player player;
     GameClient gameClient;
     List<Player> players = new List<Player>();
+    protected ElementReference pageContainer;
     #endregion
     #region Page Handlers
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
             return;
+
+        await JsRuntime.InvokeVoidAsync("SetFocusToElement", pageContainer);
 
         _context = await this._canvasReference.CreateCanvas2DAsync();
 
@@ -77,7 +80,7 @@
     #region Game Actions
     protected async Task OnKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Enter")
+        if (args.Key == "Enter" || args.Key == " ")
         {
             if (IsConnected)
             {
@@ -226,7 +229,7 @@
         await _context.BeginBatchAsync();
         await _context.SetFillStyleAsync("black");
         await _context.FillRectAsync(egg.X, egg.Y, Constants.SNAKE_SIZE, Constants.SNAKE_SIZE);
-        await _context.EndBatchAsync();       
+        await _context.EndBatchAsync();
     }
 
     private async Task Draw(Snake snake)
@@ -284,7 +287,7 @@
 
     private async Task SetupCanvasAsync()
     {
-        
+
     }
 
     private async Task ResetCanvasAsync()
