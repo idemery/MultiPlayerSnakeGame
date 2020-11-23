@@ -63,24 +63,8 @@
         await SetupCanvasAsync();
     }
 
-    protected override void OnInitialized()
-    {
-        //string gid;
-        //NavManager.TryGetQueryString<string>("GameId", out gid);
-        //GameId = gid;
-        //NavManager.LocationChanged += HandleLocationChanged;
-    }
-
-    void HandleLocationChanged(object sender, LocationChangedEventArgs e)
-    {
-        //NavManager.TryGetQueryString<string>("game", out GameId);
-
-        //StateHasChanged();
-    }
-
     public async ValueTask DisposeAsync()
     {
-        NavManager.LocationChanged -= HandleLocationChanged;
         if (gameClient != null)
         {
             gameClient.MessageReceived -= MessageReceived;
@@ -110,10 +94,6 @@
         {
             return;
         }
-
-        // used for debugging.. don't delete
-        //await gameClient.PlayAsync(new Play { KeyCode = args.Key });
-        //return;
 
 
         if (args.Key != lastArrowKey)
@@ -246,7 +226,7 @@
         await _context.BeginBatchAsync();
         await _context.SetFillStyleAsync("black");
         await _context.FillRectAsync(egg.X, egg.Y, Constants.SNAKE_SIZE, Constants.SNAKE_SIZE);
-        await _context.EndBatchAsync();
+        await _context.EndBatchAsync();       
     }
 
     private async Task Draw(Snake snake)
@@ -304,11 +284,7 @@
 
     private async Task SetupCanvasAsync()
     {
-        //await _context.BeginBatchAsync();
-        //await _context.SetStrokeStyleAsync("red");
-        //await _context.SetLineWidthAsync(1);
-        //await _context.StrokeRectAsync(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
-        //await _context.EndBatchAsync();
+        
     }
 
     private async Task ResetCanvasAsync()
@@ -323,7 +299,6 @@
         return players.Find(p => p.Id == gameClient.ConnectionId);
     }
 
-    //private static Random random = new Random(DateTime.Now.Ticks.GetHashCode());
     public string RandomString(int length)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
